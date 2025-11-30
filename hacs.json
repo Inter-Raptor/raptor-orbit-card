@@ -1,7 +1,6 @@
 {
   "name": "Raptor Orbit Card",
   "filename": "raptor-orbit-card.js",
-  "type": "plugin",
   "content_in_root": true,
   "render_readme": true
 }
