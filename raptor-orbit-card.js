@@ -186,6 +186,7 @@ class RaptorOrbitCard extends LitBase {
       font_label: config.font_label ?? 1,
       font_temp: config.font_temp ?? 1,
       font_current: config.font_current ?? 1,
+      label_bold: config.label_bold ?? false,   // option pour mettre les noms en gras
 
       // liste d'entités normalisées
       entities: norm,
@@ -769,7 +770,7 @@ class RaptorOrbitCard extends LitBase {
 
   _renderSlots() {
     const entities = this._config.entities;
-    const count = entities.length;
+       const count = entities.length;
     const baseAngle = 360 / count; // angle entre chaque bulle
     const radius = 90 * (this._config.compact ? 0.95 : 1); // rayon de l'orbite
 
@@ -900,8 +901,8 @@ class RaptorOrbitCard extends LitBase {
             current < s.to
         );
         if (sev && sev.color) {
+          // on garde fillPercent basé sur min/max, on change seulement la couleur
           fillColor = sev.color;
-          fillPercent = 1; // plein, mais couleur selon severité
         }
       }
 
@@ -957,7 +958,7 @@ class RaptorOrbitCard extends LitBase {
         this._config.text_color_secondary ||
         "rgba(245,245,245,0.78)";
 
-      const labelStyle = `font-size:${0.65 * (this._config.font_label || 1)}rem;color:${textSecondary};`;
+      const labelStyle = `font-size:${0.65 * (this._config.font_label || 1)}rem;color:${textSecondary};${this._config.label_bold ? "font-weight:600;" : ""}`;
       const bigStyle = `font-size:${1.45 * (this._config.font_temp || 1)}rem;color:${textMain};`;
       const smallStyle = `font-size:${0.7 * (this._config.font_current || 1)}rem;color:${textSecondary};`;
 
@@ -1029,8 +1030,11 @@ class RaptorOrbitCard extends LitBase {
       if (startX === null) return;
       const dx = e.clientX - startX;
       const thr = 40; // seuil de mouvement pour considérer un swipe
-      if (dx > thr) this._rotate(-1);
-      if (dx < -thr) this._rotate(1);
+
+      // inversion du sens
+      if (dx > thr) this._rotate(1);
+      if (dx < -thr) this._rotate(-1);
+
       startX = null;
     });
   }
