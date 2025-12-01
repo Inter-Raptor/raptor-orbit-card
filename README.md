@@ -13,8 +13,6 @@
 
 ## English
 
-![Raptor Orbit Card –
-
 Custom Lovelace card for Home Assistant displaying up to **8 entities**
 as bubbles orbiting around a central disc.
 
@@ -625,7 +623,7 @@ Résumé des principales options :
   - `true` : température actuelle en gros, consigne en petit.
 - **`auto_center_timeout`** : délai avant recentrage sur `primary_entity`.
 - **`shape` / `pattern` / `edge_style`** : style visuel des bulles.
-- **`label_bold``** : met tous les `name` des entités en gras.
+- **`label_bold`** : met tous les `name` des entités en gras.
 
 ---
 
@@ -924,8 +922,6 @@ Merci d’utiliser **Raptor Orbit Card** 🦖💡
 
 
 ## Español
-
-![Raptor Orbit Card 
 
 Tarjeta Lovelace personalizada para Home Assistant que muestra hasta **8 entidades**
 como burbujas orbitando alrededor de un disco central.
@@ -1368,9 +1364,6 @@ _Fin del documento._
 
 ## Deutsch
 
-
-
-![Raptor Orbit Card –
 Benutzerdefinierte Lovelace-Karte für Home Assistant, die bis zu **8 Entitäten**
 als Blasen an einer Umlaufbahn um eine zentrale Scheibe anzeigt.
 
