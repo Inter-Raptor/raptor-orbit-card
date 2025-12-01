@@ -438,6 +438,138 @@ entities:
     hold_action: more-info
 ```
 
+---
+
+## 6. Examples with GIF
+
+### 6.1. Mixed – General control
+
+![Mix](mix.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Home control
+primary_entity: climate.thermostat_rdc
+color_on: "#ff9800"
+color_off: "#37474f"
+disc_color: "#263238"
+disc_color_dark: "#111318"
+nav_color: "#455a64"
+label_bold: true
+entities:
+  - entity: climate.thermostat_rdc
+    name: Heating – Ground floor
+    mode: climate
+    primary: true
+  - entity: sensor.thermometre_rdc_temperature
+    name: Ground floor temperature
+    mode: sensor
+  - entity: cover.volet_sejour
+    name: Living room shutter
+    mode: cover
+  - entity: switch.interrupteur_sejour
+    name: Living room plug
+    mode: binary
+  - entity: person.myriam
+    name: Myriam
+    mode: sensor
+    value_map:
+      home: "home"
+      not_home: "away"
+```
+
+### 6.2. Thermostat – Room group
+
+![Thermostat](thermostat.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Thermostat
+primary_entity: climate.thermostat_rdc
+invert_swipe: true
+label_bold: true
+entities:
+  - entity: climate.thermostat_rdc
+    name: Living room
+    mode: climate
+    primary: true
+  - entity: climate.thermostat_chambre_gl
+    name: Playroom
+    mode: climate
+  - entity: climate.thermostat_sdb
+    name: Bathroom
+    mode: climate
+  - entity: climate.thermostat_chambre_parents
+    name: Parents
+    mode: climate
+  - entity: climate.thermostat_chambre_maxence
+    name: Maxence
+    mode: climate
+```
+
+### 6.3. Switch control – Workshop / Office
+
+![Office control](bureau.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Office control
+primary_entity: switch.commande_laser
+disc_color: "#00e5ff"
+disc_color_dark: "#00171f"
+nav_color: "#00ffc3"
+color_on: "#00ff7f"
+color_off: "#263238"
+shape: hex
+label_bold: true
+entities:
+  - entity: switch.commande_laser
+    name: Laser engraver
+    mode: binary
+    primary: true
+  - entity: switch.commande_3d_fdm
+    name: 3D printer FDM
+    mode: binary
+  - entity: switch.commande_3d_sla
+    name: 3D printer SLA
+    mode: binary
+  - entity: switch.commande_ventilation
+    name: Ventilation
+    mode: binary
+```
+
+### 6.4. Ground floor shutters
+
+![Ground floor shutters](chauf.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Ground floor shutters
+primary_entity: cover.volet_sejour
+disc_color: "#4e342e"
+disc_color_dark: "#1b1513"
+nav_color: "#fbc02d"
+color_on: "#fbc02d"
+color_off: "#3e2723"
+shape: square
+pattern: stripes
+label_bold: true
+entities:
+  - entity: cover.volet_cuisine
+    name: Kitchen
+    mode: cover
+  - entity: cover.volet_salon1
+    name: Living room 1
+    mode: cover
+  - entity: cover.volet_salon2
+    name: Living room 2
+    mode: cover
+  - entity: cover.volet_sejour
+    name: Dining room
+    mode: cover
+    primary: true
+```
+
 
 ---
 
@@ -1348,6 +1480,138 @@ entities:
     hold_action: more-info
 ```
 
+---
+
+## 6) Ejemplos con GIF
+
+### 6.1) Mezcla – Control general
+
+![Mix](mix.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Control casa
+primary_entity: climate.thermostat_rdc
+color_on: "#ff9800"
+color_off: "#37474f"
+disc_color: "#263238"
+disc_color_dark: "#111318"
+nav_color: "#455a64"
+label_bold: true
+entities:
+  - entity: climate.thermostat_rdc
+    name: Calefacción – Planta baja
+    mode: climate
+    primary: true
+  - entity: sensor.thermometre_rdc_temperature
+    name: Temperatura planta baja
+    mode: sensor
+  - entity: cover.volet_sejour
+    name: Persiana salón
+    mode: cover
+  - entity: switch.interrupteur_sejour
+    name: Enchufe salón
+    mode: binary
+  - entity: person.myriam
+    name: Myriam
+    mode: sensor
+    value_map:
+      home: "casa"
+      not_home: "fuera"
+```
+
+### 6.2) Termostato – Grupo de zonas
+
+![Thermostat](thermostat.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Termostato
+primary_entity: climate.thermostat_rdc
+invert_swipe: true
+label_bold: true
+entities:
+  - entity: climate.thermostat_rdc
+    name: Salón
+    mode: climate
+    primary: true
+  - entity: climate.thermostat_chambre_gl
+    name: Sala de juegos
+    mode: climate
+  - entity: climate.thermostat_sdb
+    name: Baño
+    mode: climate
+  - entity: climate.thermostat_chambre_parents
+    name: Padres
+    mode: climate
+  - entity: climate.thermostat_chambre_maxence
+    name: Maxence
+    mode: climate
+```
+
+### 6.3) Control de enchufes – Taller / despacho
+
+![Control despacho](bureau.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Control despacho
+primary_entity: switch.commande_laser
+disc_color: "#00e5ff"
+disc_color_dark: "#00171f"
+nav_color: "#00ffc3"
+color_on: "#00ff7f"
+color_off: "#263238"
+shape: hex
+label_bold: true
+entities:
+  - entity: switch.commande_laser
+    name: Grabador láser
+    mode: binary
+    primary: true
+  - entity: switch.commande_3d_fdm
+    name: Impresora 3D FDM
+    mode: binary
+  - entity: switch.commande_3d_sla
+    name: Impresora 3D SLA
+    mode: binary
+  - entity: switch.commande_ventilation
+    name: Ventilación
+    mode: binary
+```
+
+### 6.4) Persianas planta baja
+
+![Persianas planta baja](chauf.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Persianas planta baja
+primary_entity: cover.volet_sejour
+disc_color: "#4e342e"
+disc_color_dark: "#1b1513"
+nav_color: "#fbc02d"
+color_on: "#fbc02d"
+color_off: "#3e2723"
+shape: square
+pattern: stripes
+label_bold: true
+entities:
+  - entity: cover.volet_cuisine
+    name: Cocina
+    mode: cover
+  - entity: cover.volet_salon1
+    name: Salón 1
+    mode: cover
+  - entity: cover.volet_salon2
+    name: Salón 2
+    mode: cover
+  - entity: cover.volet_sejour
+    name: Comedor
+    mode: cover
+    primary: true
+```
+
 
 ---
 
@@ -1787,6 +2051,138 @@ entities:
       home: "home"
     tap_action: more-info
     hold_action: more-info
+```
+
+---
+
+## 6) Beispiele mit GIF
+
+### 6.1) Mix – Allgemeine Steuerung
+
+![Mix](mix.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Haussteuerung
+primary_entity: climate.thermostat_rdc
+color_on: "#ff9800"
+color_off: "#37474f"
+disc_color: "#263238"
+disc_color_dark: "#111318"
+nav_color: "#455a64"
+label_bold: true
+entities:
+  - entity: climate.thermostat_rdc
+    name: Heizung – Erdgeschoss
+    mode: climate
+    primary: true
+  - entity: sensor.thermometre_rdc_temperature
+    name: Temperatur Erdgeschoss
+    mode: sensor
+  - entity: cover.volet_sejour
+    name: Rollladen Wohnzimmer
+    mode: cover
+  - entity: switch.interrupteur_sejour
+    name: Steckdose Wohnzimmer
+    mode: binary
+  - entity: person.myriam
+    name: Myriam
+    mode: sensor
+    value_map:
+      home: "zu Hause"
+      not_home: "unterwegs"
+```
+
+### 6.2) Thermostat – Raumgruppe
+
+![Thermostat](thermostat.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Thermostat
+primary_entity: climate.thermostat_rdc
+invert_swipe: true
+label_bold: true
+entities:
+  - entity: climate.thermostat_rdc
+    name: Wohnzimmer
+    mode: climate
+    primary: true
+  - entity: climate.thermostat_chambre_gl
+    name: Spielzimmer
+    mode: climate
+  - entity: climate.thermostat_sdb
+    name: Bad
+    mode: climate
+  - entity: climate.thermostat_chambre_parents
+    name: Eltern
+    mode: climate
+  - entity: climate.thermostat_chambre_maxence
+    name: Maxence
+    mode: climate
+```
+
+### 6.3) Schaltsteuerung – Werkstatt / Büro
+
+![Büro-Steuerung](bureau.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Büro-Steuerung
+primary_entity: switch.commande_laser
+disc_color: "#00e5ff"
+disc_color_dark: "#00171f"
+nav_color: "#00ffc3"
+color_on: "#00ff7f"
+color_off: "#263238"
+shape: hex
+label_bold: true
+entities:
+  - entity: switch.commande_laser
+    name: Lasergravierer
+    mode: binary
+    primary: true
+  - entity: switch.commande_3d_fdm
+    name: 3D-Drucker FDM
+    mode: binary
+  - entity: switch.commande_3d_sla
+    name: 3D-Drucker SLA
+    mode: binary
+  - entity: switch.commande_ventilation
+    name: Belüftung
+    mode: binary
+```
+
+### 6.4) Rollläden Erdgeschoss
+
+![Rollläden Erdgeschoss](chauf.gif)
+
+```yaml
+type: custom:raptor-orbit-card
+title: Rollläden Erdgeschoss
+primary_entity: cover.volet_sejour
+disc_color: "#4e342e"
+disc_color_dark: "#1b1513"
+nav_color: "#fbc02d"
+color_on: "#fbc02d"
+color_off: "#3e2723"
+shape: square
+pattern: stripes
+label_bold: true
+entities:
+  - entity: cover.volet_cuisine
+    name: Küche
+    mode: cover
+  - entity: cover.volet_salon1
+    name: Wohnzimmer 1
+    mode: cover
+  - entity: cover.volet_salon2
+    name: Wohnzimmer 2
+    mode: cover
+  - entity: cover.volet_sejour
+    name: Esszimmer
+    mode: cover
+    primary: true
 ```
 
 
