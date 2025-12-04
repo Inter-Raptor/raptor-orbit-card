@@ -19,13 +19,20 @@ as bubbles orbiting around a central disc.
 - ✅ Supports: `climate`, `cover`, `switch`, `light`, `input_boolean`,
   `sensor`, `gauge`…
 - 🌀 Navigation via **swipe** or **left / right arrows**.
-- 🖱️ Handles **tap** and **long‑press** (toggle, more‑info, etc.).
+- 🖱️ Handles **tap** and **long-press** (toggle, more-info, etc.).
 - 🎨 Default theme: black + orange, fully customizable.
 - 💿 “Modern dashboard” style: slightly tilted disc, 3D effect, configurable bubbles.
+- 🎚 Optional **`tilt`** option: keep the angled disc or use a flat / non-tilted layout.
+- 🎛 New **slot styling** options: padding, radius and border color – globally and per entity.
+- 🔤 `label_bold` option to render entity names in **bold**.
 
-Author: **Inter‑Raptor (Vivien Jardot)**  
+Author: **Inter-Raptor (Vivien Jardot)**  
 Status: **Home beta**
 
+> ℹ️ **Compatibility**  
+> All new options (`tilt`, slot styling, etc.) are **optional**.  
+> If you don’t change anything in your YAML, the card keeps the same
+> behaviour and look as previous versions.
 
 ---
 
@@ -45,7 +52,6 @@ Paste the full JavaScript code of the card into this file.
 > Do not forget the comment header `/* ... */` before the ASCII logo in the JS file,  
 > otherwise part of the logo will be interpreted as code.
 
-
 ### 2. Lovelace resource
 
 In Home Assistant:
@@ -56,12 +62,10 @@ In Home Assistant:
    - **Type**: `JavaScript Module`
 3. Save
 
-
 ### 3. Reload the interface
 
 - Either: **Settings → Developer tools → Reload resources**
 - Or: clear the browser cache / force reload (`CTRL+F5`)
-
 
 ---
 
@@ -83,7 +87,6 @@ entities:
 - All options (colors, shapes, etc.) are optional.  
   The card applies **default values** if nothing is specified.
 
-
 ---
 
 ## 3) General behavior
@@ -98,7 +101,6 @@ entities:
   - Executes `hold_action` (by default: `more-info`).
 
 Horizontal swipe (left / right) also changes the active bubble.
-
 
 ---
 
@@ -122,6 +124,7 @@ invert_swipe: false
 invert_temps: false
 auto_center_timeout: 0
 main_scale: 1.1
+tilt: true                  # true = angled disc (default), false = flat
 
 color_on: "#ff9800"
 color_off: "#37474f"
@@ -140,6 +143,12 @@ shape: circle          # circle | square | hex
 pattern: solid         # solid | stripes | dots
 edge_style: liquid     # liquid | straight
 
+# Global slot styling (applies to all bubbles)
+slot_padding: 12       # px – inner padding of each bubble slot
+slot_radius: 18        # px – corner radius of slots
+slot_border_color_on: "#ffffff40"
+slot_border_color_off: "#00000040"
+
 font_header: 1
 font_label: 1
 font_temp: 1
@@ -151,55 +160,30 @@ climate_color_idle: "#37474f"
 
 switch_color_on: "#ff9800"
 switch_color_off: "#37474f"
-```
 
+label_bold: true       # render entity names in bold
+```
 
 ### Quick description of main options
 
-**title**  
-Text displayed at the top left.
-
-**primary_entity**  
-Main entity (target for auto‑center).
-
-**compact**  
-`true` → smaller card height.
-
-**transparent**  
-`true` → remove background and shadow of the `ha-card`.
-
-**show_title / show_status**  
-Show or hide the title and the status text in the top right.
-
-**show_arrows**  
-Displays the left / right navigation bars.
-
-**show_hint**  
-Displays help text at the bottom of the card.
-
-**invert_swipe**  
-Reverse swipe direction (left / right).
-
-**invert_temps** (for `climate` entities)  
-- `false`: setpoint big, current temperature small.  
-- `true` : current temperature big, setpoint small.
-
-**auto_center_timeout**  
-- `0` = disabled  
-- `> 0`: seconds before the card auto‑centers on `primary_entity`.
-
-**main_scale**  
-Zoom factor for the central bubble (`1.1` = 10 % larger).
-
-**shape**  
-Default bubble shape: `circle`, `square`, `hex`.
-
-**pattern**  
-Fill pattern: `solid`, `stripes`, `dots`.
-
-**edge_style**  
-Edge of the filled area: `straight` (sharp) or `liquid` (soft).
-
+- **`title`** – Text displayed at the top left.  
+- **`primary_entity`** – Main entity (target for auto-center).  
+- **`compact`** – `true` → smaller card height.  
+- **`transparent`** – `true` → remove background and shadow of the `ha-card`.  
+- **`show_title` / `show_status`** – Show or hide the title and the status text.  
+- **`show_arrows`** – Displays the left / right navigation bars.  
+- **`show_hint`** – Displays help text at the bottom of the card.  
+- **`invert_swipe`** – Reverse swipe direction (left / right).  
+- **`invert_temps`** (for `climate` entities):  
+  - `false`: setpoint big, current temperature small.  
+  - `true`: current temperature big, setpoint small.  
+- **`auto_center_timeout`** – `0` = disabled, `> 0` = seconds before the card auto-centers on `primary_entity`.  
+- **`main_scale`** – Zoom factor for the central bubble (`1.1` = 10 % larger).  
+- **`tilt`** – `true` keeps the angled / 3D disc, `false` uses a flat disc and slots.  
+- **`shape` / `pattern` / `edge_style`** – Default visual style of the bubbles.  
+- **`slot_padding`, `slot_radius`** – Global layout of the entity “slots” (inner padding and corner radius).  
+- **`slot_border_color_on` / `slot_border_color_off`** – Border color when the entity is on/off.  
+- **`label_bold`** – Set all entity names in bold.
 
 ---
 
@@ -224,6 +208,10 @@ entities:
     value_map:
       state1: "Text 1"
       state2: "Text 2"
+    # Optional per-entity slot styling:
+    padding: 12        # overrides global slot_padding
+    radius: 18         # overrides global slot_radius
+    border_color: "#ffffff40"
 ```
 
 Automatic detection of `mode` if not defined:
@@ -232,7 +220,6 @@ Automatic detection of `mode` if not defined:
 - `cover.xxx` → `mode: cover`  
 - `switch` / `light` / `input_boolean` → `mode: binary`  
 - `sensor.xxx` → `mode: sensor`
-
 
 ### 5.1) Climate
 
@@ -259,7 +246,6 @@ Three phases:
 - **cool** → cooling color  
 - **idle** → neutral color when nothing is heating / cooling
 
-
 ### 5.2) Cover (blinds)
 
 ```yaml
@@ -279,7 +265,6 @@ Uses `current_position` or `position` in percent.
 The fill progresses according to this value.  
 Default `tap_action`: `toggle` (open / close).
 
-
 ### 5.3) Binary (switch / light / input_boolean)
 
 ```yaml
@@ -297,7 +282,6 @@ Default `tap_action`: `toggle` (open / close).
 
 - **ON** → full fill with `color_on`  
 - **OFF** → full fill with `color_off`
-
 
 ### 5.4) Gauge
 
@@ -330,7 +314,6 @@ Default `tap_action`: `toggle` (open / close).
 - `min` and `max` define the scale.  
 - `severities` allows changing color according to the value.
 
-
 ### 5.5) Simple sensor
 
 ```yaml
@@ -353,7 +336,6 @@ Default `tap_action`: `toggle` (open / close).
   hold_action: more-info
 ```
 
-
 ### 5.6) Person / tracker (with `value_map`)
 
 ```yaml
@@ -368,7 +350,6 @@ Default `tap_action`: `toggle` (open / close).
 ```
 
 `value_map` lets you replace the raw state text by a custom label.
-
 
 ---
 
@@ -387,6 +368,8 @@ nav_color: "#455a64"
 shape: circle
 pattern: solid
 edge_style: liquid
+slot_padding: 12
+slot_radius: 18
 
 entities:
   - entity: climate.thermostat_rdc
@@ -570,7 +553,6 @@ entities:
     primary: true
 ```
 
-
 ---
 
 ## 7) Limits and notes
@@ -578,9 +560,12 @@ entities:
 - Maximum **8 entities** per card.  
 - Some custom entities will be treated as simple `sensor`.  
 - If a numeric value cannot be converted to a number, the card simply shows
-  the text without a gauge.
+  the text without a gauge.  
+- New styling options (`tilt`, slot padding / radius / border) are fully optional
+  and safe to ignore if you prefer the original look.
 
-_End of document._
+_End of English section._
+
 
 
 
