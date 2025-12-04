@@ -78,44 +78,37 @@ const css =
 // -------------------- DEFINITION DE LA CARTE --------------------
 
 class RaptorOrbitCard extends LitBase {
-  // Déclaration des propriétés réactives (gestion interne de l'état de la carte)
   static get properties() {
     return {
-      hass: {},           // Contexte Home Assistant (entités, services, etc.)
-      _config: {},        // Configuration de la carte
-      _activeIndex: { type: Number },   // Index de l'élément actuellement centré
-      _primaryIndex: { type: Number },  // Index de l'entité principale ("home")
-      _autoTimer: {},     // Timer pour revenir automatiquement à l'entité principale
-      _holdTimer: {},     // Timer pour différencier tap / hold
-      _holdFired: { type: Boolean }, // True si le hold a été déclenché
+      hass: {},
+      _config: {},
+      _activeIndex: { type: Number },
+      _primaryIndex: { type: Number },
+      _autoTimer: {},
+      _holdTimer: {},
+      _holdFired: { type: Boolean },
     };
   }
 
   constructor() {
     super();
-    // Je fixe les indices de départ
     this._activeIndex = 0;
     this._primaryIndex = 0;
-    // Timers de swipe / auto center / hold
     this._autoTimer = null;
     this._holdTimer = null;
     this._holdFired = false;
   }
 
-  // Configuration de la carte (appelé par Home Assistant)
   setConfig(config) {
     const items = config.entities || config.items;
 
-    // Je m'assure qu'au moins 1 entité est définie
     if (!items || !Array.isArray(items) || items.length < 1) {
       throw new Error("Tu dois definir au moins 1 entite dans 'entities'.");
     }
-    // Je limite volontairement à 8 pour garder le rendu propre
     if (items.length > 8) {
       throw new Error("Maximum 8 entites dans cette carte.");
     }
 
-    // Normalisation des items : string -> { entity: ... }
     const norm = items.map((it) => {
       if (typeof it === "string") return { entity: it };
       if (!it.entity) {
@@ -124,12 +117,10 @@ class RaptorOrbitCard extends LitBase {
       return { ...it };
     });
 
-    // Définition de l'entité principale (celle sur laquelle on recentre)
     const primaryEntity =
       config.primary_entity || (norm[0] && norm[0].entity);
     const primaryIndex = norm.findIndex((it) => it.entity === primaryEntity);
 
-    // Je stocke toutes les options dans _config, avec valeurs par défaut
     this._config = {
       // affichage global
       title: config.title || "",
@@ -143,8 +134,8 @@ class RaptorOrbitCard extends LitBase {
       invert_temps: config.invert_temps ?? false,
 
       primary_entity: primaryEntity,
-      auto_center_timeout: config.auto_center_timeout ?? 0, // 0 = désactivé
-      main_scale: config.main_scale ?? 1.1,                 // taille bulle centrale
+      auto_center_timeout: config.auto_center_timeout ?? 0,
+      main_scale: config.main_scale ?? 1.1,
 
       // thème par défaut noir + orange
       color_on: config.color_on || "#ff9800",
@@ -168,6 +159,9 @@ class RaptorOrbitCard extends LitBase {
       pattern: config.pattern || "solid",       // solid | stripes | dots
       edge_style: config.edge_style || "liquid",// liquid | straight
 
+      // orientation disque / slots
+      tilt: config.tilt ?? true,                // true = oblique (comme avant), false = disque normal
+
       // couleurs spécifiques climate
       climate_color_heat:
         config.climate_color_heat || config.color_on || "#ff9800",
@@ -186,23 +180,26 @@ class RaptorOrbitCard extends LitBase {
       font_label: config.font_label ?? 1,
       font_temp: config.font_temp ?? 1,
       font_current: config.font_current ?? 1,
-      label_bold: config.label_bold ?? false,   // option pour mettre les noms en gras
+      label_bold: config.label_bold ?? false,
 
-      // liste d'entités normalisées
+      // style global des slots (nouveau mais avec défauts = comportement actuel)
+      slot_padding: config.slot_padding ?? 4,         // 4px = ce que tu avais dans le CSS
+      slot_radius: config.slot_radius ?? null,        // null = laisse shape-circle / square gérer
+      slot_border_color_on: config.slot_border_color_on || null,
+      slot_border_color_off: config.slot_border_color_off || null,
+
+      // liste d'entités
       entities: norm,
     };
 
-    // Je calcule l'index de l'entité principale
     this._primaryIndex = primaryIndex >= 0 ? primaryIndex : 0;
 
-    // Je corrige _activeIndex si besoin
     if (this._activeIndex === undefined) {
       this._activeIndex = this._primaryIndex;
     } else if (this._activeIndex >= norm.length) {
       this._activeIndex = 0;
     }
 
-    // Je nettoie le timer d'auto-center au changement de config
     this._clearAutoTimer();
   }
 
@@ -210,7 +207,6 @@ class RaptorOrbitCard extends LitBase {
 
   static get styles() {
     return css`
-      /* Conteneur principal de la carte */
       ha-card {
         padding: 12px 14px 10px;
         border-radius: 20px;
@@ -232,7 +228,6 @@ class RaptorOrbitCard extends LitBase {
         box-shadow: none;
       }
 
-      /* En-tête (titre + statut) */
       .header {
         display: flex;
         align-items: center;
@@ -248,7 +243,6 @@ class RaptorOrbitCard extends LitBase {
         color: var(--raptor-text-secondary);
       }
 
-      /* Zone du disque + bulles */
       .wheel-wrapper {
         position: relative;
         width: 100%;
@@ -263,7 +257,6 @@ class RaptorOrbitCard extends LitBase {
         height: 190px;
       }
 
-      /* Disque principal légèrement oblique (effet 3D/ellipse) */
       .wheel {
         position: relative;
         width: 260px;
@@ -278,6 +271,11 @@ class RaptorOrbitCard extends LitBase {
         transition: transform 0.35s ease-out;
       }
 
+      /* Variante "flat" si tilt = false */
+      .wheel.flat {
+        transform: none;
+      }
+
       .wheel-disc {
         position: absolute;
         inset: 18px;
@@ -285,7 +283,6 @@ class RaptorOrbitCard extends LitBase {
         background: radial-gradient(circle at 30% 20%, var(--disc-color), var(--disc-color-dark));
       }
 
-      /* Bulle générique (slot) */
       .slot {
         position: absolute;
         top: 50%;
@@ -317,7 +314,6 @@ class RaptorOrbitCard extends LitBase {
         overflow: hidden;
       }
 
-      /* Contenu interne de la bulle (je contre-rotate pour lisibilité) */
       .slot-inner {
         transform: rotate(18deg) scaleY(1.15);
         display: flex;
@@ -328,7 +324,11 @@ class RaptorOrbitCard extends LitBase {
         z-index: 2;
       }
 
-      /* Bande de remplissage (gauge / cover / états ON/OFF) */
+      /* Variante "flat" pour le contenu quand tilt = false */
+      .slot-inner.flat {
+        transform: none;
+      }
+
       .slot-fill {
         position: absolute;
         left: 0;
@@ -365,7 +365,6 @@ class RaptorOrbitCard extends LitBase {
         color: var(--raptor-text-secondary);
       }
 
-      /* Etats visuels actifs / ON / OFF */
       .slot.active.on {
         opacity: 1;
         box-shadow:
@@ -389,11 +388,10 @@ class RaptorOrbitCard extends LitBase {
         opacity: 0.95;
       }
 
-      .slot.off:not(.active) {
+      .slot.off:not(.active)) {
         opacity: 0.7;
       }
 
-      /* Formes de bulles (configurable) */
       .shape-circle {
         border-radius: 999px;
       }
@@ -413,7 +411,6 @@ class RaptorOrbitCard extends LitBase {
         );
       }
 
-      /* Motifs de remplissage (configurable) */
       .pattern-solid {
         background: var(--fill-color);
       }
@@ -435,7 +432,6 @@ class RaptorOrbitCard extends LitBase {
         background-color: var(--fill-color);
       }
 
-      /* Style de bord (net ou liquide/flou) */
       .edge-straight {
         filter: none;
       }
@@ -444,7 +440,6 @@ class RaptorOrbitCard extends LitBase {
         filter: blur(3px);
       }
 
-      /* Boutons de navigation gauche/droite */
       .nav {
         position: absolute;
         top: 50%;
@@ -482,7 +477,6 @@ class RaptorOrbitCard extends LitBase {
         transform: translateY(-50%) scale(1.02);
       }
 
-      /* Petit texte d'aide sous la carte */
       .hint {
         text-align: center;
         font-size: 0.7rem;
@@ -495,7 +489,6 @@ class RaptorOrbitCard extends LitBase {
 
   // -------------------- HELPERS --------------------
 
-  // Je supprime le timer d'auto recentrage
   _clearAutoTimer() {
     if (this._autoTimer) {
       clearTimeout(this._autoTimer);
@@ -503,7 +496,6 @@ class RaptorOrbitCard extends LitBase {
     }
   }
 
-  // Je programme le retour automatique sur l'entité principale après X secondes
   _scheduleAutoCenter() {
     this._clearAutoTimer();
     const timeoutSec = this._config.auto_center_timeout;
@@ -513,7 +505,6 @@ class RaptorOrbitCard extends LitBase {
     }, timeoutSec * 1000);
   }
 
-  // Rotation des bulles (delta = +1 ou -1)
   _rotate(delta) {
     const len = this._config.entities.length;
     const realDelta = this._config.invert_swipe ? -delta : delta;
@@ -521,7 +512,6 @@ class RaptorOrbitCard extends LitBase {
     this._scheduleAutoCenter();
   }
 
-  // Ouvre la pop-up "plus d'info" de l'entité
   _openMoreInfo(entityId) {
     this.dispatchEvent(
       new CustomEvent("hass-more-info", {
@@ -532,7 +522,6 @@ class RaptorOrbitCard extends LitBase {
     );
   }
 
-  // Toggle switch / light / input_boolean / cover sinon more-info
   _toggleEntity(entityId) {
     if (!this.hass) return;
     const stateObj = this.hass.states[entityId];
@@ -555,13 +544,11 @@ class RaptorOrbitCard extends LitBase {
     }
   }
 
-  // Détermine si l'entité est considérée comme "ON" pour le rendu visuel
   _isOn(stateObj, mode) {
     if (!stateObj) return false;
     const domain = stateObj.entity_id.split(".")[0];
 
     if (mode === "climate" || domain === "climate") {
-      // ON uniquement quand ça chauffe ou refroidit vraiment
       const action = stateObj.attributes.hvac_action;
       return action === "heating" || action === "cooling";
     }
@@ -585,7 +572,6 @@ class RaptorOrbitCard extends LitBase {
     return false;
   }
 
-  // Déduit le "mode" de la bulle à partir du domaine + config item
   _getMode(item, stateObj) {
     if (item.mode) return item.mode;
     if (!stateObj) return "sensor";
@@ -603,7 +589,6 @@ class RaptorOrbitCard extends LitBase {
     return "sensor";
   }
 
-  // Je prépare toutes les infos d'affichage pour une entité
   _getDisplayData(item) {
     const stateObj = this.hass && this.hass.states[item.entity];
     if (!stateObj) {
@@ -633,7 +618,6 @@ class RaptorOrbitCard extends LitBase {
     let percent = null;
     let climate_phase = null;
 
-    // Cas climate
     if (mode === "climate") {
       current = attr.current_temperature ?? null;
       target =
@@ -652,7 +636,6 @@ class RaptorOrbitCard extends LitBase {
       } else {
         climate_phase = "idle";
       }
-    // Cas cover (position en %)
     } else if (mode === "cover") {
       const pos = attr.current_position ?? attr.position;
       if (typeof pos === "number") {
@@ -660,7 +643,6 @@ class RaptorOrbitCard extends LitBase {
         percent = Math.max(0, Math.min(1, pos / 100));
         if (!unit) unit = "%";
       }
-    // Cas gauge (valeur numérique avec min/max)
     } else if (mode === "gauge") {
       const raw = parseFloat(stateObj.state);
       if (!isNaN(raw)) {
@@ -673,10 +655,8 @@ class RaptorOrbitCard extends LitBase {
       } else {
         current = stateObj.state;
       }
-    // Cas binaire on/off
     } else if (mode === "binary") {
       current = stateObj.state;
-    // Cas sensor générique (optionnellement gauge)
     } else {
       const raw = parseFloat(stateObj.state);
       if (!isNaN(raw) && (item.min !== undefined || item.max !== undefined)) {
@@ -691,7 +671,6 @@ class RaptorOrbitCard extends LitBase {
       }
     }
 
-    // mapping de valeur (par ex. home -> "maison")
     if (item.value_map && typeof current === "string") {
       const mapped = item.value_map[current];
       if (mapped !== undefined) {
@@ -702,12 +681,10 @@ class RaptorOrbitCard extends LitBase {
     return { name, current, target, unit, stateObj, mode, percent, climate_phase };
   }
 
-  // Gestion des actions tap / hold sur une bulle
   _handleAction(type, index, item, info) {
     const stateObj = info.stateObj;
     const mode = info.mode;
 
-    // premier tap : recentrage sur la bulle
     if (type === "tap" && index !== this._activeIndex) {
       this._activeIndex = index;
       this._scheduleAutoCenter();
@@ -716,7 +693,6 @@ class RaptorOrbitCard extends LitBase {
 
     if (!stateObj) return;
 
-    // comportement par défaut selon le type
     const defaultTap =
       mode === "binary" || mode === "cover" ? "toggle" : "more-info";
 
@@ -732,7 +708,6 @@ class RaptorOrbitCard extends LitBase {
     }
   }
 
-  // POINTEUR : début d'appui (possibilité de hold)
   _onSlotPointerDown(ev, index, item, info) {
     if (ev.button !== undefined && ev.button !== 0) return;
     this._holdFired = false;
@@ -746,7 +721,6 @@ class RaptorOrbitCard extends LitBase {
     }, 600);
   }
 
-  // POINTEUR : fin d'appui (si pas hold -> tap)
   _onSlotPointerUp(ev, index, item, info) {
     if (ev.button !== undefined && ev.button !== 0) return;
     if (this._holdTimer) {
@@ -758,7 +732,6 @@ class RaptorOrbitCard extends LitBase {
     }
   }
 
-  // POINTEUR : sortie de la bulle -> j'annule le hold
   _onSlotPointerLeave() {
     if (this._holdTimer) {
       clearTimeout(this._holdTimer);
@@ -770,15 +743,15 @@ class RaptorOrbitCard extends LitBase {
 
   _renderSlots() {
     const entities = this._config.entities;
-       const count = entities.length;
-    const baseAngle = 360 / count; // angle entre chaque bulle
-    const radius = 90 * (this._config.compact ? 0.95 : 1); // rayon de l'orbite
+    const count = entities.length;
+    const baseAngle = 360 / count;
+    const radius = 90 * (this._config.compact ? 0.95 : 1);
+    const tiltOn = this._config.tilt !== false;
 
     return entities.map((item, index) => {
       const info = this._getDisplayData(item);
       const { name, current, target, unit, stateObj, mode, percent, climate_phase } = info;
 
-      // offset circulaire par rapport à la bulle active
       const offset = ((index - this._activeIndex) % count + count) % count;
       const angle = offset * baseAngle + 90;
       const rad = (angle * Math.PI) / 180;
@@ -796,6 +769,18 @@ class RaptorOrbitCard extends LitBase {
         z-index: ${isActive ? 20 : 10};
       `;
 
+      // style supplémentaire (padding / radius / border-color)
+      const padding = item.padding ?? this._config.slot_padding;
+      const radiusSlot = item.radius ?? this._config.slot_radius;
+      const borderColor =
+        item.border_color ??
+        (isOn ? this._config.slot_border_color_on : this._config.slot_border_color_off);
+
+      let extraStyle = "";
+      if (padding != null) extraStyle += `padding:${padding}px;`;
+      if (radiusSlot) extraStyle += `border-radius:${radiusSlot};`;
+      if (borderColor) extraStyle += `border-color:${borderColor};`;
+
       const classes = ["slot"];
       classes.push(isOn ? "on" : "off");
 
@@ -805,14 +790,12 @@ class RaptorOrbitCard extends LitBase {
 
       if (isActive) classes.push("active");
 
-      // valeurs à afficher (big = principal, small = secondaire)
       let big = target ?? current ?? (stateObj ? stateObj.state : "");
       let small =
         current != null && target != null && current !== target
           ? current
           : null;
 
-      // inverser l'affichage des températures (option)
       if (this._config.invert_temps && current != null && target != null) {
         big = current;
         small = target;
@@ -830,26 +813,20 @@ class RaptorOrbitCard extends LitBase {
       let unitText = unit || "";
       if (unitText === "°" || unitText === "Â°") unitText = "°";
 
-      // ---------------- REMPLISSAGE (slot-fill) ----------------
       let fillStyle = "";
       let fillPercent = percent;
       let fillColor = null;
 
-      // cover -> remplissage en fonction de la position (%)
       if (mode === "cover") {
         fillColor =
           item.cover_fill_color ||
           this._config.cover_fill_color ||
           this._config.color_on;
-
-      // gauge -> remplissage en fonction de la valeur
       } else if (mode === "gauge") {
         fillColor =
           item.gauge_color ||
           this._config.gauge_default_color ||
           this._config.color_on;
-
-      // binaire -> rempli à 100% avec color_on / color_off
       } else if (mode === "binary") {
         if (isOn) {
           fillPercent = 1;
@@ -864,8 +841,6 @@ class RaptorOrbitCard extends LitBase {
             this._config.switch_color_off ||
             this._config.color_off;
         }
-
-      // climate -> rempli à 100% avec couleur selon phase (heat/cool/idle)
       } else if (mode === "climate") {
         fillPercent = 1;
         if (climate_phase === "heat") {
@@ -879,7 +854,6 @@ class RaptorOrbitCard extends LitBase {
             this._config.climate_color_cool ||
             "#00bcd4";
         } else {
-          // phase idle / off -> couleur neutre
           fillColor =
             item.idle_color ||
             this._config.climate_color_idle ||
@@ -887,7 +861,6 @@ class RaptorOrbitCard extends LitBase {
         }
       }
 
-      // severities pour gauge ou sensor (numérique)
       if (
         (mode === "gauge" || mode === "sensor") &&
         typeof current === "number" &&
@@ -901,12 +874,10 @@ class RaptorOrbitCard extends LitBase {
             current < s.to
         );
         if (sev && sev.color) {
-          // on garde fillPercent basé sur min/max, on change seulement la couleur
           fillColor = sev.color;
         }
       }
 
-      // Je calcule le style CSS de la zone remplie
       if (fillPercent != null && fillPercent > 0 && fillColor) {
         const pct = Math.round(
           Math.max(0, Math.min(1, fillPercent)) * 100
@@ -935,7 +906,6 @@ class RaptorOrbitCard extends LitBase {
             bottom: 0;
           `;
         } else {
-          // bottom_to_top par défaut
           sizePart = `
             width: 100%;
             height: ${pct}%;
@@ -950,7 +920,6 @@ class RaptorOrbitCard extends LitBase {
         `;
       }
 
-      // couleurs de texte (override par item possible)
       const textMain =
         item.text_color || this._config.text_color || "#f5f5f5";
       const textSecondary =
@@ -965,7 +934,6 @@ class RaptorOrbitCard extends LitBase {
       const edge = item.edge_style || this._config.edge_style || "liquid";
       const pattern = item.pattern || this._config.pattern || "solid";
 
-      // Handlers pour pointer (tap/hold)
       const handleDown = (ev) =>
         this._onSlotPointerDown(ev, index, item, info);
       const handleUp = (ev) =>
@@ -975,7 +943,7 @@ class RaptorOrbitCard extends LitBase {
       return html`
         <div
           class="${classes.join(" ")}"
-          style="${style}"
+          style="${style} ${extraStyle}"
           @pointerdown=${handleDown}
           @pointerup=${handleUp}
           @pointercancel=${handleLeave}
@@ -987,7 +955,7 @@ class RaptorOrbitCard extends LitBase {
                 style="${fillStyle}"
               ></div>`
             : null}
-          <div class="slot-inner">
+          <div class="slot-inner ${tiltOn ? "" : "flat"}">
             ${name
               ? html`<div class="label" style="${labelStyle}">
                   ${name}
@@ -1016,7 +984,6 @@ class RaptorOrbitCard extends LitBase {
 
   // -------------------- LIFE CYCLE --------------------
 
-  // Premier rendu : j'ajoute la gestion du swipe horizontal
   firstUpdated() {
     const zone = this.renderRoot.querySelector(".wheel-wrapper");
     if (!zone) return;
@@ -1029,9 +996,8 @@ class RaptorOrbitCard extends LitBase {
     zone.addEventListener("pointerup", (e) => {
       if (startX === null) return;
       const dx = e.clientX - startX;
-      const thr = 40; // seuil de mouvement pour considérer un swipe
+      const thr = 40;
 
-      // inversion du sens
       if (dx > thr) this._rotate(1);
       if (dx < -thr) this._rotate(-1);
 
@@ -1039,7 +1005,6 @@ class RaptorOrbitCard extends LitBase {
     });
   }
 
-  // Rendu principal de la carte (appelé régulièrement par HA)
   render() {
     if (!this._config || !this.hass) return html``;
 
@@ -1052,7 +1017,6 @@ class RaptorOrbitCard extends LitBase {
     const { name, stateObj, mode } = info;
     const isOn = this._isOn(stateObj, mode);
 
-    // Variables CSS pour la couleur du disque et du texte
     const discStyle = `
       --disc-color: ${this._config.disc_color};
       --disc-color-dark: ${this._config.disc_color_dark};
@@ -1064,6 +1028,10 @@ class RaptorOrbitCard extends LitBase {
 
     const headerScale = this._config.font_header || 1;
     const headerStyle = `font-size:${0.95 * headerScale}rem;`;
+
+    const tiltOn = this._config.tilt !== false;
+    const wheelClasses = ["wheel"];
+    if (!tiltOn) wheelClasses.push("flat");
 
     return html`
       <ha-card class="${cardClasses.join(" ")}">
@@ -1103,7 +1071,7 @@ class RaptorOrbitCard extends LitBase {
               `
             : null}
 
-          <div class="wheel" style="${discStyle}">
+          <div class="${wheelClasses.join(" ")}" style="${discStyle}">
             <div class="wheel-disc"></div>
             ${this._renderSlots()}
           </div>
@@ -1120,7 +1088,6 @@ class RaptorOrbitCard extends LitBase {
     `;
   }
 
-  // Taille "estimée" de la carte pour Lovelace (en unités de lignes)
   getCardSize() {
     return 4;
   }
@@ -1128,12 +1095,10 @@ class RaptorOrbitCard extends LitBase {
 
 // -------------------- ENREGISTREMENT DE LA CARTE --------------------
 
-// Enregistrement du custom element si pas déjà fait
 if (!customElements.get("raptor-orbit-card")) {
   customElements.define("raptor-orbit-card", RaptorOrbitCard);
 }
 
-// Déclaration pour l'aperçu dans l'éditeur Lovelace (liste des cartes custom)
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "raptor-orbit-card",
