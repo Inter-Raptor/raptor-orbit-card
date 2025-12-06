@@ -19,7 +19,7 @@
      - entity: sensor.temperature_salon
 
    Auteur : Inter-Raptor (Vivien Jardot)
-   Version : 1.0 (bêta maison)
+   Version : 1.1.4 (wheel_size + card_padding + show_current)
    -------------------------------------------------------------------------
 */
 
@@ -103,16 +103,16 @@ class RaptorOrbitCard extends LitBase {
     const items = config.entities || config.items;
 
     if (!items || !Array.isArray(items) || items.length < 1) {
-      throw new Error("Tu dois definir au moins 1 entite dans 'entities'.");
+      throw new Error("Tu dois définir au moins 1 entité dans 'entities'.");
     }
     if (items.length > 8) {
-      throw new Error("Maximum 8 entites dans cette carte.");
+      throw new Error("Maximum 8 entités dans cette carte.");
     }
 
     const norm = items.map((it) => {
       if (typeof it === "string") return { entity: it };
       if (!it.entity) {
-        throw new Error("Chaque item doit avoir une propriete 'entity'.");
+        throw new Error("Chaque item doit avoir une propriété 'entity'.");
       }
       return { ...it };
     });
@@ -133,11 +133,24 @@ class RaptorOrbitCard extends LitBase {
       invert_swipe: config.invert_swipe ?? false,
       invert_temps: config.invert_temps ?? false,
 
+      // afficher / masquer la ligne "current"
+      show_current: config.show_current ?? true,
+
+      // padding personnalisé du ha-card (nombre ou string CSS)
+      card_padding: config.card_padding ?? null,
+
+      // diamètre de la roue (px)
+      wheel_size: config.wheel_size ?? 260,
+
       primary_entity: primaryEntity,
       auto_center_timeout: config.auto_center_timeout ?? 0,
       main_scale: config.main_scale ?? 1.1,
 
-      // thème par défaut noir + orange
+      // gestion de thème
+      // auto = suit hass.themes.darkMode
+      theme_mode: config.theme_mode || "auto",
+
+      // palette « logique » (sera recolorée par le thème)
       color_on: config.color_on || "#ff9800",
       color_off: config.color_off || "#37474f",
 
@@ -149,10 +162,9 @@ class RaptorOrbitCard extends LitBase {
       gauge_default_color: config.gauge_default_color || "#4caf50",
       gauge_direction: config.gauge_direction || "bottom_to_top",
 
-      // texte global
-      text_color: config.text_color || "#f5f5f5",
-      text_color_secondary:
-        config.text_color_secondary || "rgba(245,245,245,0.78)",
+      // texte global (sera adapté par thème clair / sombre si non forcé)
+      text_color: config.text_color || null,
+      text_color_secondary: config.text_color_secondary || null,
 
       // style global des bulles
       shape: config.shape || "circle",          // circle | square | hex
@@ -160,7 +172,7 @@ class RaptorOrbitCard extends LitBase {
       edge_style: config.edge_style || "liquid",// liquid | straight
 
       // orientation disque / slots
-      tilt: config.tilt ?? true,                // true = oblique (comme avant), false = disque normal
+      tilt: config.tilt ?? true,                // true = oblique, false = plat
 
       // couleurs spécifiques climate
       climate_color_heat:
@@ -175,16 +187,16 @@ class RaptorOrbitCard extends LitBase {
       switch_color_off:
         config.switch_color_off || config.color_off || "#37474f",
 
-      // tailles de police (multiplicateurs)
-      font_header: config.font_header ?? 1,
-      font_label: config.font_label ?? 1,
-      font_temp: config.font_temp ?? 1,
-      font_current: config.font_current ?? 1,
-      label_bold: config.label_bold ?? false,
+      // tailles de police (multiplicateurs) – boost lisibilité
+      font_header: config.font_header ?? 1.05,
+      font_label: config.font_label ?? 1.15,
+      font_temp: config.font_temp ?? 1.1,
+      font_current: config.font_current ?? 1.15,
+      label_bold: config.label_bold ?? true,
 
-      // style global des slots (nouveau mais avec défauts = comportement actuel)
-      slot_padding: config.slot_padding ?? 4,         // 4px = ce que tu avais dans le CSS
-      slot_radius: config.slot_radius ?? null,        // null = laisse shape-circle / square gérer
+      // style global des slots
+      slot_padding: config.slot_padding ?? 4,
+      slot_radius: config.slot_radius ?? null,
       slot_border_color_on: config.slot_border_color_on || null,
       slot_border_color_off: config.slot_border_color_off || null,
 
@@ -203,6 +215,77 @@ class RaptorOrbitCard extends LitBase {
     this._clearAutoTimer();
   }
 
+  // -------------------- THEMES --------------------
+
+  _getEffectiveThemeMode() {
+    const mode = this._config.theme_mode || "auto";
+    if (mode === "light" || mode === "dark") return mode;
+
+    // auto : suivre le mode sombre HA
+    const dark =
+      this.hass &&
+      this.hass.themes &&
+      this.hass.themes.darkMode;
+    return dark ? "dark" : "light";
+  }
+
+  _getThemeVars() {
+    const mode = this._getEffectiveThemeMode();
+
+    if (mode === "dark") {
+      const textMain =
+        this._config.text_color || "#f5f5f5";
+      const textSecondary =
+        this._config.text_color_secondary || "rgba(245,245,245,0.78)";
+      return {
+        // fond carte général
+        cardBg:
+          "radial-gradient(circle at 20% 0%, #252a32, #15171c 70%)",
+        // fond de la « sphère »
+        wheelBg:
+          "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.16), transparent 55%)," +
+          "radial-gradient(circle at 70% 80%, rgba(0,0,0,0.75), transparent 60%)",
+        // slots
+        slotBg: "linear-gradient(145deg, #313640, #181b21)",
+        slotShadow:
+          "0 8px 16px rgba(0,0,0,0.6), inset 0 0 8px rgba(255,255,255,0.05)",
+        // nav
+        navBg: this._config.nav_color || "#455a64",
+        navText: "#f5f5f5",
+        // disque
+        discColor: this._config.disc_color || "#263238",
+        discColorDark: this._config.disc_color_dark || "#111318",
+        // texte
+        textMain,
+        textSecondary,
+      };
+    }
+
+    // thème clair
+    const textMain =
+      this._config.text_color || "#0b1120";
+    const textSecondary =
+      this._config.text_color_secondary || "#1f2933";
+
+    return {
+      cardBg:
+        "radial-gradient(circle at 20% -10%, #ffffff, #e6edf7 55%, #d0d9e6 100%)",
+      wheelBg:
+        "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.95), rgba(219,234,254,0.95))," +
+        "radial-gradient(circle at 70% 80%, rgba(148,163,184,0.55), transparent 60%)",
+      slotBg: "linear-gradient(145deg, #ffffff, #e5edf7)",
+      slotShadow:
+        "0 6px 12px rgba(148,163,184,0.65), inset 0 0 6px rgba(255,255,255,0.9)",
+      navBg:
+        "linear-gradient(180deg,#d0deef,#b3c5e0)",
+      navText: "#0b1120",
+      discColor: "#f4f7fb",
+      discColorDark: "#c9d5e8",
+      textMain,
+      textSecondary,
+    };
+  }
+
   // -------------------- STYLES --------------------
 
   static get styles() {
@@ -214,9 +297,23 @@ class RaptorOrbitCard extends LitBase {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        background: radial-gradient(circle at 20% 0%, #252a32, #15171c 70%);
+
+        background: var(
+          --raptor-card-bg,
+          radial-gradient(circle at 20% 0%, #252a32, #15171c 70%)
+        );
+
         --raptor-text-main: #f5f5f5;
         --raptor-text-secondary: rgba(245,245,245,0.78);
+        --raptor-slot-bg: linear-gradient(145deg, #313640, #181b21);
+        --raptor-slot-shadow:
+          0 8px 16px rgba(0,0,0,0.6),
+          inset 0 0 8px rgba(255,255,255,0.05);
+        --raptor-nav-bg: #455a64;
+        --raptor-nav-text: #f5f5f5;
+        --raptor-wheel-bg:
+          radial-gradient(circle at 30% 20%, rgba(255,255,255,0.16), transparent 55%),
+          radial-gradient(circle at 70% 80%, rgba(0,0,0,0.75), transparent 60%);
       }
 
       ha-card.compact {
@@ -238,15 +335,15 @@ class RaptorOrbitCard extends LitBase {
       }
 
       .sub {
-        font-size: 0.75rem;
-        opacity: 0.7;
+        font-size: 0.78rem;
+        opacity: 0.9;
         color: var(--raptor-text-secondary);
       }
 
       .wheel-wrapper {
         position: relative;
         width: 100%;
-        height: 220px;
+        height: var(--raptor-wheel-size, 260px); /* même taille que la roue */
         overflow: visible;
         display: flex;
         align-items: center;
@@ -254,19 +351,16 @@ class RaptorOrbitCard extends LitBase {
       }
 
       ha-card.compact .wheel-wrapper {
-        height: 190px;
+        height: calc(var(--raptor-wheel-size, 260px) - 30px);
       }
 
       .wheel {
         position: relative;
-        width: 260px;
-        height: 260px;
+        width: var(--raptor-wheel-size, 260px);
+        height: var(--raptor-wheel-size, 260px);
         border-radius: 50%;
-        background:
-          radial-gradient(circle at 30% 20%, rgba(255,255,255,0.16), transparent 55%),
-          radial-gradient(circle at 70% 80%, rgba(0,0,0,0.75), transparent 60%);
-        box-shadow:
-          inset 0 0 10px rgba(0,0,0,0.8);
+        background: var(--raptor-wheel-bg);
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         transform: rotate(-18deg) scaleY(0.85);
         transition: transform 0.35s ease-out;
       }
@@ -280,7 +374,11 @@ class RaptorOrbitCard extends LitBase {
         position: absolute;
         inset: 18px;
         border-radius: 50%;
-        background: radial-gradient(circle at 30% 20%, var(--disc-color), var(--disc-color-dark));
+        background: radial-gradient(
+          circle at 30% 20%,
+          var(--disc-color),
+          var(--disc-color-dark)
+        );
       }
 
       .slot {
@@ -289,10 +387,8 @@ class RaptorOrbitCard extends LitBase {
         left: 50%;
         width: 88px;
         height: 88px;
-        background: linear-gradient(145deg, #313640, #181b21);
-        box-shadow:
-          0 8px 16px rgba(0,0,0,0.6),
-          inset 0 0 8px rgba(255,255,255,0.05);
+        background: var(--raptor-slot-bg);
+        box-shadow: var(--raptor-slot-shadow);
         transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
@@ -303,7 +399,7 @@ class RaptorOrbitCard extends LitBase {
         font-size: 0.7rem;
         padding: 4px;
         cursor: pointer;
-        opacity: 0.84;
+        opacity: 0.9;
         transition:
           transform 0.35s ease-out,
           opacity 0.25s ease-out,
@@ -319,7 +415,7 @@ class RaptorOrbitCard extends LitBase {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 2px;
+        gap: 4px;
         position: relative;
         z-index: 2;
       }
@@ -341,8 +437,8 @@ class RaptorOrbitCard extends LitBase {
       }
 
       .slot .label {
-        font-size: 0.65rem;
-        opacity: 0.8;
+        font-size: 0.9rem;
+        opacity: 0.95;
         color: var(--raptor-text-secondary);
       }
 
@@ -360,8 +456,8 @@ class RaptorOrbitCard extends LitBase {
       }
 
       .temp-current {
-        font-size: 0.7rem;
-        opacity: 0.9;
+        font-size: 0.85rem;
+        opacity: 0.95;
         color: var(--raptor-text-secondary);
       }
 
@@ -383,13 +479,13 @@ class RaptorOrbitCard extends LitBase {
 
       .slot.on:not(.active) {
         box-shadow:
-          0 10px 20px rgba(0,0,0,0.7),
-          0 0 10px rgba(255,140,60,0.55);
-        opacity: 0.95;
+          0 10px 20px rgba(0,0,0,0.45),
+          0 0 10px rgba(255,140,60,0.45);
+        opacity: 0.96;
       }
 
-      .slot.off:not(.active)) {
-        opacity: 0.7;
+      .slot.off:not(.active) {
+        opacity: 0.8;
       }
 
       .shape-circle {
@@ -447,16 +543,16 @@ class RaptorOrbitCard extends LitBase {
         width: 34px;
         height: 70%;
         border-radius: 999px;
-        background: radial-gradient(circle at 50% 50%, #232731, #111318 80%);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+        background: var(--raptor-nav-bg);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.35);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         user-select: none;
-        opacity: 0.9;
+        opacity: 0.95;
         transition: opacity 0.2s ease-out, transform 0.2s ease-out, background 0.2s;
-        color: #f5f5f5;
+        color: var(--raptor-nav-text);
       }
 
       .nav-left {
@@ -480,7 +576,7 @@ class RaptorOrbitCard extends LitBase {
       .hint {
         text-align: center;
         font-size: 0.7rem;
-        opacity: 0.55;
+        opacity: 0.7;
         margin-top: 2px;
         color: var(--raptor-text-secondary);
       }
@@ -741,11 +837,11 @@ class RaptorOrbitCard extends LitBase {
 
   // -------------------- RENDER DES BULLES --------------------
 
-  _renderSlots() {
+  _renderSlots(themeVars) {
     const entities = this._config.entities;
     const count = entities.length;
     const baseAngle = 360 / count;
-    const radius = 90 * (this._config.compact ? 0.95 : 1);
+    const radius = 90 * (this._config.compact ? 0.95 : 1); // rayon des bulles
     const tiltOn = this._config.tilt !== false;
 
     return entities.map((item, index) => {
@@ -799,6 +895,13 @@ class RaptorOrbitCard extends LitBase {
       if (this._config.invert_temps && current != null && target != null) {
         big = current;
         small = target;
+      }
+
+      // possibilité de cacher complètement la ligne "current"
+      const showCurrent =
+        item.show_current ?? this._config.show_current ?? true;
+      if (!showCurrent) {
+        small = null;
       }
 
       const mainValue =
@@ -920,16 +1023,12 @@ class RaptorOrbitCard extends LitBase {
         `;
       }
 
-      const textMain =
-        item.text_color || this._config.text_color || "#f5f5f5";
-      const textSecondary =
-        item.text_color_secondary ||
-        this._config.text_color_secondary ||
-        "rgba(245,245,245,0.78)";
+      const textMain = themeVars.textMain;
+      const textSecondary = themeVars.textSecondary;
 
-      const labelStyle = `font-size:${0.65 * (this._config.font_label || 1)}rem;color:${textSecondary};${this._config.label_bold ? "font-weight:600;" : ""}`;
+      const labelStyle = `font-size:${0.9 * (this._config.font_label || 1)}rem;color:${textSecondary};${this._config.label_bold ? "font-weight:600;" : ""}`;
       const bigStyle = `font-size:${1.45 * (this._config.font_temp || 1)}rem;color:${textMain};`;
-      const smallStyle = `font-size:${0.7 * (this._config.font_current || 1)}rem;color:${textSecondary};`;
+      const smallStyle = `font-size:${0.85 * (this._config.font_current || 1)}rem;color:${textSecondary};`;
 
       const edge = item.edge_style || this._config.edge_style || "liquid";
       const pattern = item.pattern || this._config.pattern || "solid";
@@ -1008,6 +1107,8 @@ class RaptorOrbitCard extends LitBase {
   render() {
     if (!this._config || !this.hass) return html``;
 
+    const themeVars = this._getThemeVars();
+
     const cardClasses = [];
     if (this._config.compact) cardClasses.push("compact");
     if (this._config.transparent) cardClasses.push("transparent");
@@ -1017,15 +1118,6 @@ class RaptorOrbitCard extends LitBase {
     const { name, stateObj, mode } = info;
     const isOn = this._isOn(stateObj, mode);
 
-    const discStyle = `
-      --disc-color: ${this._config.disc_color};
-      --disc-color-dark: ${this._config.disc_color_dark};
-      --raptor-text-main: ${this._config.text_color || "#f5f5f5"};
-      --raptor-text-secondary: ${
-        this._config.text_color_secondary || "rgba(245,245,245,0.78)"
-      };
-    `;
-
     const headerScale = this._config.font_header || 1;
     const headerStyle = `font-size:${0.95 * headerScale}rem;`;
 
@@ -1033,8 +1125,29 @@ class RaptorOrbitCard extends LitBase {
     const wheelClasses = ["wheel"];
     if (!tiltOn) wheelClasses.push("flat");
 
+    let cardStyle = `
+      --raptor-card-bg:${themeVars.cardBg};
+      --raptor-wheel-bg:${themeVars.wheelBg};
+      --raptor-slot-bg:${themeVars.slotBg};
+      --raptor-slot-shadow:${themeVars.slotShadow};
+      --raptor-nav-bg:${themeVars.navBg};
+      --raptor-nav-text:${themeVars.navText};
+      --disc-color:${themeVars.discColor};
+      --disc-color-dark:${themeVars.discColorDark};
+      --raptor-text-main:${themeVars.textMain};
+      --raptor-text-secondary:${themeVars.textSecondary};
+      --raptor-wheel-size:${this._config.wheel_size || 260}px;
+    `;
+
+    // padding personnalisé du ha-card
+    if (this._config.card_padding != null) {
+      const p = this._config.card_padding;
+      const padValue = typeof p === "number" ? `${p}px` : String(p);
+      cardStyle += `padding:${padValue};`;
+    }
+
     return html`
-      <ha-card class="${cardClasses.join(" ")}">
+      <ha-card class="${cardClasses.join(" ")}" style="${cardStyle}">
         ${this._config.show_title || this._config.show_status
           ? html`
               <div class="header" style="${headerStyle}">
@@ -1044,7 +1157,7 @@ class RaptorOrbitCard extends LitBase {
                 <div class="sub">
                   ${this._config.show_status && stateObj
                     ? html`${name || activeItem.entity}
-                        • ${isOn ? "En chauffe / actif" : "A l'arret"}`
+                        • ${isOn ? "En chauffe / actif" : "À l'arrêt"}`
                     : ""}
                 </div>
               </div>
@@ -1056,14 +1169,12 @@ class RaptorOrbitCard extends LitBase {
             ? html`
                 <div
                   class="nav nav-left"
-                  style="background:${this._config.nav_color};"
                   @click=${() => this._rotate(-1)}
                 >
                   <span>&lt;</span>
                 </div>
                 <div
                   class="nav nav-right"
-                  style="background:${this._config.nav_color};"
                   @click=${() => this._rotate(1)}
                 >
                   <span>&gt;</span>
@@ -1071,16 +1182,16 @@ class RaptorOrbitCard extends LitBase {
               `
             : null}
 
-          <div class="${wheelClasses.join(" ")}" style="${discStyle}">
+          <div class="${wheelClasses.join(" ")}">
             <div class="wheel-disc"></div>
-            ${this._renderSlots()}
+            ${this._renderSlots(themeVars)}
           </div>
         </div>
 
         ${this._config.show_hint
           ? html`<div class="hint">
-              Glisse de gauche a droite ou utilise les fleches pour changer
-              d'element. Clique sur l'element principal pour les details
+              Glisse de gauche à droite ou utilise les flèches pour changer
+              d'élément. Clique sur l'élément principal pour les détails
               (ou selon tap_action / hold_action).
             </div>`
           : null}
