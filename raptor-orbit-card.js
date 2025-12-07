@@ -19,7 +19,7 @@
      - entity: sensor.temperature_salon
 
    Auteur : Inter-Raptor (Vivien Jardot)
-   Version : 1.1.6 (thèmes auto + fix sensor en gauge)
+   Version : 0.1.2 (thèmes auto + fix sensor en gauge)
    -------------------------------------------------------------------------
 */
 
@@ -1319,3 +1319,4 @@ window.customCards.push({
   description:
     "Carte orbitale multi-usages (climate, sensor, cover, switch, gauge).",
 });
+
