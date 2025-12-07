@@ -334,4 +334,268 @@ entities:
     value_map:
       unknown: "?"
 ```
+## 6. Examples
+
+### 6.1 Heating – Whole house
+
+![Heating – Whole house](heating.gif)
+
+Orbit card showing all climate entities of the house on a single wheel.  
+You can quickly swipe between rooms while keeping the main floor thermostat in front.
+
+```yaml
+type: custom:raptor-orbit-card
+theme_mode: auto
+title: Heating – Whole house
+primary_entity: climate.thermostat_rdc
+auto_center_timeout: 10
+invert_swipe: true
+main_scale: 1.15
+label_bold: true
+disc_color: "#e5ecf6"
+disc_color_dark: "#cbd5e1"
+nav_color: "#64748b"
+color_on: "#ff9800"
+color_off: "#90a4ae"
+entities:
+  - entity: climate.thermostat_rdc
+    name: Ground floor
+    mode: climate
+  - entity: climate.thermostat_chambre_gl
+    name: Guest room
+    mode: climate
+  - entity: climate.thermostat_chambre_maxence
+    name: Maxence
+    mode: climate
+  - entity: climate.thermostat_chambre_parents
+    name: Parents
+    mode: climate
+  - entity: climate.thermostat_sdb
+    name: Bathroom
+    mode: climate
+```
+
+---
+
+### 6.2 Ground floor shutters
+
+![Ground floor shutters](cover.gif)
+
+Square “card” style for covers with striped pattern and custom colors.  
+Each shutter shows its position as a fill percentage.
+
+```yaml
+type: custom:raptor-orbit-card
+theme_mode: light
+title: Ground floor shutters
+primary_entity: cover.volet_sejour
+auto_center_timeout: 10
+main_scale: 1.15
+shape: square
+pattern: stripes
+disc_color: "#e8f7fb"
+disc_color_dark: "#c4e4f5"
+nav_color: "#0284c7"
+color_on: "#06b6d4"
+color_off: "#64748b"
+label_bold: true
+entities:
+  - entity: cover.volet_cuisine
+    name: Kitchen
+    mode: cover
+  - entity: cover.volet_salon1
+    name: Living room 1
+    mode: cover
+  - entity: cover.volet_salon2
+    name: Living room 2
+    mode: cover
+  - entity: cover.volet_sejour
+    name: Dining room
+    mode: cover
+```
+
+---
+
+### 6.3 Ground floor lighting
+
+![Ground floor lighting](light.gif)
+
+Transparent card over a custom background image.  
+Hex-shaped bubbles for all binary lights on the ground floor.
+
+```yaml
+type: custom:raptor-orbit-card
+theme_mode: light
+title: Ground floor lighting
+transparent: true
+primary_entity: light.interrupteur_salon
+auto_center_timeout: 10
+main_scale: 1.15
+shape: hex
+disc_color: "#eef2ff"
+disc_color_dark: "#e0e7ff"
+nav_color: "#38bdf8"
+color_on: "#22c55e"
+color_off: "#9ca3af"
+label_bold: true
+entities:
+  - entity: light.interrupteur_salon
+    name: Living room
+    mode: binary
+  - entity: light.interrupteur_sejour
+    name: Dining room
+    mode: binary
+  - entity: light.interrupteur_cuisine
+    name: Kitchen
+    mode: binary
+  - entity: light.interrupteur_escalier
+    name: Stairs
+    mode: binary
+  - entity: light.interrupteur_entree
+    name: Entrance
+    mode: binary
+```
+
+---
+
+### 6.4 Energy overview (sensors & gauges)
+
+![Energy overview](sensor.gif)
+
+Mixed sensor view with one big gauge for the instant current and several temperature sensors around it.
+
+```yaml
+type: custom:raptor-orbit-card
+theme_mode: light
+title: Energy overview
+primary_entity: sensor.courant_efficase_intantane
+auto_center_timeout: 10
+main_scale: 1.15
+shape: circle
+pattern: dots
+disc_color: "#dbeafe"
+disc_color_dark: "#bfdbfe"
+nav_color: "#0ea5e9"
+color_on: "#22c55e"
+color_off: "#64748b"
+label_bold: true
+entities:
+  - entity: sensor.courant_efficase_intantane
+    name: Instant current
+    mode: gauge
+    gauge_min: 0
+    gauge_max: 40
+    gauge_direction: left_to_right
+    thresholds:
+      - value: 10
+        color: "#22c55e"
+      - value: 25
+        color: "#f97316"
+      - value: 40
+        color: "#ef4444"
+  - entity: sensor.thermometre_exterieur_temperature
+    name: Outdoor temperature
+    mode: sensor
+    min: -10
+    max: 40
+  - entity: sensor.thermometre_rdc_temperature
+    name: Ground floor temperature
+    mode: sensor
+    min: 10
+    max: 30
+  - entity: sensor.thermometre_chambre_parents_temperature
+    name: Parents room
+    mode: sensor
+    min: 10
+    max: 30
+  - entity: sensor.thermometre_maxence_temperature
+    name: Maxence room
+    mode: sensor
+    min: 10
+    max: 30
+  - entity: sensor.thermometre_pc_temperature
+    name: PC desk
+    mode: sensor
+    min: 15
+    max: 40
+  - entity: sensor.thermometre_sdb_temperature
+    name: Bathroom
+    mode: sensor
+    min: 10
+    max: 30
+```
+
+---
+
+### 6.5 Mixed demo (sensors + covers + climate)
+
+![Mixed demo](divers.gif)
+
+Showcase of different shapes and patterns on the same card:  
+striped sensors, hex covers and a central climate bubble.
+
+```yaml
+type: custom:raptor-orbit-card
+show_title: false
+show_status: false
+show_hint: false
+show_arrows: true
+tilt: false
+primary_entity: climate.thermostat_rdc
+theme_mode: auto
+shape: circle
+pattern: solid
+edge_style: liquid
+entities:
+  - entity: sensor.thermometre_rdc_temperature
+    name: Température RDC
+    mode: sensor
+    shape: square
+    pattern: stripes
+    edge_style: liquid
+    min: 0
+    max: 40
+    gauge_direction: left_to_right
+    severities:
+      - from: 0
+        to: 10
+        color: "#2196f3"
+      - from: 10
+        to: 20
+        color: "#4caf50"
+      - from: 20
+        to: 40
+        color: "#ff4336"
+  - entity: cover.volet_sejour
+    name: Volet séjour
+    mode: cover
+    shape: hex
+    pattern: stripes
+    edge_style: straight
+    gauge_direction: bottom_to_top
+    cover_fill_color: "#fbc02d"
+    border_color: "#5d4037"
+  - entity: climate.thermostat_rdc
+    name: Chauffage RDC
+    mode: climate
+    shape: circle
+  - entity: cover.volet_salon1
+    name: Salon 1
+    mode: cover
+    shape: hex
+    pattern: stripes
+    edge_style: straight
+    gauge_direction: bottom_to_top
+    cover_fill_color: "#fbc02d"
+    border_color: "#5d4037"
+  - entity: cover.volet_salon2
+    name: Salon 2
+    mode: cover
+    shape: hex
+    pattern: stripes
+    edge_style: straight
+    gauge_direction: top_to_bottom
+    cover_fill_color: "#fbc02d"
+    border_color: "#5d4037"
+```
 
