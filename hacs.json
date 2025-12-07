@@ -1,7 +1,5 @@
 {
   "name": "Raptor Orbit Card",
   "filename": "raptor-orbit-card.js",
-  "render_readme": true,
-  "hide_default_branch": true,
-  "version": "0.1.1"
+  "render_readme": true
 }
